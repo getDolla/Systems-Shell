@@ -1,7 +1,18 @@
-compile:
-	gcc executor.c
-run: a.out
-	-./a.out
+GCC = gcc -g
+output = pshell
+
+compile: executor.o
+	$(GCC) executor.c -o $(output)
+
+executor.o: executor.c
+	$(GCC) -c executor.c
+
+run: $(output)
+	./$(output)
+
 clean:
-	rm a.out
+	rm $(output)
+	rm executor.o
 	rm -f *~
+valgrind:
+	valgrind ./$(output) --leak-check=full
