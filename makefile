@@ -11,8 +11,8 @@ run: $(output)
 	./$(output)
 
 clean:
-	rm $(output)
-	rm executor.o
+	rm -f $(output)
+	rm -f executor.o
 	rm -f *~
 valgrind:
 	valgrind ./$(output) --leak-check=full
