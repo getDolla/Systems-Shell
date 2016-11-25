@@ -21,5 +21,5 @@ clean:
 gdb: $(output)
 	gdb $(output)
 
-valgrind:
-	valgrind ./$(output) --leak-check=full
+valgrind: $(output)
+	valgrind ./$(output) --leak-check=full --trace-children=yes
