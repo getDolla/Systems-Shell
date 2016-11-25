@@ -1,18 +1,25 @@
 GCC = gcc -g
-output = pshell
+input = shell
+output = shell
 
-compile: executor.o
-	$(GCC) executor.c -o $(output)
+# Compile and run
+compile: input.o
+	$(GCC) $(input).o -o $(output)
 
-executor.o: executor.c
-	$(GCC) -c executor.c
+input.o: $(input).c
+	$(GCC) -c $(input).c
 
 run: $(output)
 	./$(output)
 
+# Other stuff
 clean:
 	rm -f $(output)
-	rm -f executor.o
+	rm -f *.o
 	rm -f *~
+
+gdb: $(output)
+	gdb $(output)
+
 valgrind:
 	valgrind ./$(output) --leak-check=full
