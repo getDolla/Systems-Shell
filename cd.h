@@ -3,6 +3,6 @@
    @return: returns nothing
    @purpose: implements the cd terminal command for our custom shell
  */
-void cd(char* dir);
+int cd(char* dir);
 void chdir_with_tilde(char* dir);
 void print_working_dir();

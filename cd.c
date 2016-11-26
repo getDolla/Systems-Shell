@@ -25,6 +25,10 @@ void chdir_with_tilde(char* dir) {
 }
 
 int cd(char* dir) {
+  if (!dir) {
+    return 1;
+  }
+
   if (*dir == '~') {
     chdir_with_tilde(dir);
   } else {

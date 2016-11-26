@@ -3,11 +3,14 @@ input = shell
 output = shell
 
 # Compile and run
-compile: input.o
-	$(GCC) $(input).o -o $(output)
+compile: input.o cd.o
+	$(GCC) cd.o $(input).o -o $(output)
 
 input.o: $(input).c
 	$(GCC) -c $(input).c
+
+cd.o: cd.c
+	$(GCC) -c cd.c
 
 run: $(output)
 	./$(output)
