@@ -12,7 +12,7 @@ input.o: $(input).c
 cd.o: cd.c
 	$(GCC) -c cd.c
 
-run: $(output)
+run: compile
 	./$(output)
 
 # Other stuff
@@ -21,8 +21,8 @@ clean:
 	rm -f *.o
 	rm -f *~
 
-gdb: $(output)
+gdb: compile
 	gdb $(output)
 
-valgrind: $(output)
+valgrind: compile
 	valgrind ./$(output) --leak-check=full --trace-children=yes

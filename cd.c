@@ -10,7 +10,7 @@ void print_working_dir() {
     printf("Current working dir: %s\n", cwd);
   }
   if (errno) {
-    printf("Error cwd %d: %s\n", errno, strerror(errno));
+    printf("Error cwd: %s\n", strerror(errno));
   }
 }
 
@@ -19,13 +19,13 @@ void chdir_with_tilde(char* dir) {
   strcpy(home, getenv("HOME"));
   chdir(strcat(getenv("HOME"), dir + 1));
   if (errno) {
-    printf("Error chdir with ~ (tilde) %d: %s\n", errno, strerror(errno));
+    printf("Error chdir with ~ (tilde): %s\n", strerror(errno));
   }
   strcpy(getenv("HOME"), home);
 }
 
 int cd(char* dir) {
-  if (!dir) {
+  if (!(*dir)) {
     return 1;
   }
 
@@ -35,7 +35,7 @@ int cd(char* dir) {
     chdir(dir);
   }
   if (errno) {
-    printf("Error chdir %d: %s\n", errno, strerror(errno));
+    printf("Error chdir: %s\n", strerror(errno));
   }
 
   print_working_dir();
