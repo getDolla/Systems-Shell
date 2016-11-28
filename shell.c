@@ -19,7 +19,8 @@ int main(int argc, char *argv[]){
 
   char command[1024]; // command buffer
   char *command_ptr = command; // pointer to command buffer
-  char *args[10]; // stores arguments for execvp
+  char *args[10]; // stores semicolon broken args
+  char *args2[10]; //stores args for use with execvp
 
   int status; // stores status of the child process
   pid_t pid; // stores the pid returned by fork
@@ -45,12 +46,30 @@ int main(int argc, char *argv[]){
       } else if (pid == 0) { // if process is child process
   	int i = 0;
   	while (command_ptr) {
-  	  args[i] = strsep(&command_ptr, " "); // parses series of arguments
+  	  args[i] = strsep(&command_ptr, ";"); // seperates along semicolon
   	  i++;
   	}
-  	args[i] = NULL; // add terminating null - necessary
+    int t = 0;
+    while(args[t]){
+      char *commandArgs = args[t];
+      int j = 0;
+      while (commandArgs) {
+    	  args2[j] = strsep(&commandArgs, " "); // seperates along semicolon
+    	  j++;
+        printf("%s\n", args2[j]);
+      }
+      //args[i] = NULL; // add terminating null - necessary
+      execvp(args2[0], args2);
+    }
 
-  	execvp(args[0], args);
+
+    //testing print
+    int f = 0;
+    while (args[f]){
+      printf("%s\n", args[f]);
+      f++;
+    }
+
 
   	exit(errno);
       } else if (pid == -1) { // if subprocess failed
