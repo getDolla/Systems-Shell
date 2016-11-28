@@ -35,6 +35,7 @@ int main(int argc, char *argv[]) {
 
   char command[1024]; // command buffer
   char *command_ptr = command; // pointer to command buffer
+
   char *args[10]; // stores semicolon broken args
   char *args2[10]; //stores args for use with execvp
 
@@ -62,32 +63,31 @@ int main(int argc, char *argv[]) {
   	wait(&status);
   	print_exit_status(status);
       } else if (pid == 0) { // if process is child process
+
+	// Separate along semicolon - entire command
   	int i = 0;
-  	while (command_ptr) {
-  	  args[i] = strsep(&command_ptr, ";"); // seperates along semicolon
-  	  i++;
-  	}
-    int t = 0;
-    while(args[t]){
-      char *commandArgs = args[t];
-      int j = 0;
-      while (commandArgs) {
-    	  args2[j] = strsep(&commandArgs, " "); // seperates along semicolon
-    	  j++;
-        printf("%s\n", args2[j]);
-      }
-      //args[i] = NULL; // add terminating null - necessary
-      execvp(args2[0], args2);
-    }
-
-
-    //testing print
-    int f = 0;
-    while (args[f]){
-      printf("%s\n", args[f]);
-      f++;
-    }
-
+	if (strchr(command_ptr, ';')) {
+	  while (command_ptr) {
+	    args[i] = strsep(&command_ptr, ";");
+	    i++;
+	  }
+	} else {
+	  args[0] = command_ptr;
+	}
+	// Separate along spaces - individual command
+	int t = 0;
+	while (args[t]) {
+	  char *commandArgs = args[t];
+	  int j = 0;
+	  while (commandArgs) {
+	    args2[j] = strsep(&commandArgs, " ");
+	    printf("%s\n", args2[j]);
+	    j++;
+	  }
+	  args2[j] = NULL; // add terminating null - necessary
+	  execvp(args2[0], args2);
+	  t++;
+	}
 
   	exit(errno);
       } else if (pid == -1) { // if subprocess failed
