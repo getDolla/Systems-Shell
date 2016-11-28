@@ -1,21 +1,36 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
+/* Several system functions */
 #include <unistd.h>
 #include <sys/types.h>
+/* For signal function */
+#include <signal.h>
+/* For wait function */
 #include <sys/wait.h>
-#include <string.h>
-#include <errno.h>
+/* For isspace function */
 #include <ctype.h>
+/* Custom header files */
 #include "cd.h"
 #include "shell.h"
+/* Error handling */
+#include <string.h>
+#include <errno.h>
+/*===================================
+  SIGNAL HANDLER
+  =====================================*/
+/* static void sighandler(int signo) { */
+/*   if (signo == SIGINT) { */
+/*     // Do nothing. */
+/*   } */
+/* } */
 
 /*===================================
-MAIN SHELL
-=====================================*/
+  MAIN SHELL
+  =====================================*/
 
-int main(int argc, char *argv[]){
-  printf("Press ctrl-c to exit.\n");
+int main(int argc, char *argv[]) {
+  /* signal(SIGINT, sighandler); */
+  
   char cur_dir[1024]; // stores current directory
 
   char command[1024]; // command buffer
@@ -37,7 +52,9 @@ int main(int argc, char *argv[]){
       if (*(command_ptr + 2)) {
 	cd(command_ptr + 3);
       }
-    } else if ( strcmp(command, "exit") != 0 ) { // check for other commands
+    } else if ( strcmp(command, "exit") == 0 ) {
+      exit(0);
+    } else { // check for other commands
       pid = fork();
 
       if (pid > 0) { // if process is the parent process
@@ -64,8 +81,8 @@ int main(int argc, char *argv[]){
 }
 
 /*===================================
-SHELL HELPER FUNCTIONS
-=====================================*/
+  SHELL HELPER FUNCTIONS
+  =====================================*/
 
 // Prints the current directory
 void pwd(char* cur_dir) {
@@ -128,8 +145,8 @@ void print_exit_status(int status) {
 
 
 /*===================================
-SHELL TESTING
-=====================================*/
+  SHELL TESTING
+  =====================================*/
 
 /* int main() { */
 /*   char test[] = " Test start "; */
