@@ -6,6 +6,7 @@
 #include <sys/wait.h>
 #include <string.h>
 #include <errno.h>
+#include <ctype.h>
 #include "cd.h"
 #include "shell.h"
 
