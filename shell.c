@@ -3,8 +3,6 @@
 /* Several system functions */
 #include <unistd.h>
 #include <sys/types.h>
-/* For signal function */
-#include <signal.h>
 /* For wait function */
 #include <sys/wait.h>
 /* For isspace function */
@@ -15,32 +13,19 @@
 /* Error handling */
 #include <string.h>
 #include <errno.h>
-/*===================================
-  SIGNAL HANDLER
-  =====================================*/
-/* static void sighandler(int signo) { */
-/*   if (signo == SIGINT) { */
-/*     // Do nothing. */
-/*   } */
-/* } */
 
 /*===================================
   MAIN SHELL
   =====================================*/
 
 int main(int argc, char *argv[]) {
-  /* signal(SIGINT, sighandler); */
-  
   char cur_dir[1024]; // stores current directory
 
   char command[1024]; // command buffer
   char *command_ptr = command; // pointer to command buffer
 
-  char *args[10]; // stores semicolon broken args
-  char *args2[10]; //stores args for use with execvp
-
-  int status; // stores status of the child process
-  pid_t pid; // stores the pid returned by fork
+  char *array_of_commands[10]; // array of commands
+  char *array_of_arguments[10]; // array of commands
 
   // make shell persistent
   while (1) {
@@ -48,54 +33,10 @@ int main(int argc, char *argv[]) {
 
     pwd(cur_dir);
 
-    get_command(command, sizeof(command));
+    get_terminal_commands(command, sizeof(command));
+    run_terminal_commands(command_ptr, array_of_commands, array_of_arguments);
 
-    if ( strncmp(command, "cd ", 3) == 0 || strcmp(command, "cd") == 0) { // Check if command is cd
-      if (*(command_ptr + 2)) {
-	cd(command_ptr + 3);
-      }
-    } else if ( strcmp(command, "exit") == 0 ) {
-      exit(0);
-    } else { // check for other commands
-      pid = fork();
-
-      if (pid > 0) { // if process is the parent process
-  	wait(&status);
-  	print_exit_status(status);
-      } else if (pid == 0) { // if process is child process
-
-	// Separate along semicolon - entire command
-  	int i = 0;
-	if (strchr(command_ptr, ';')) {
-	  while (command_ptr) {
-	    args[i] = strsep(&command_ptr, ";");
-	    i++;
-	  }
-	} else {
-	  args[0] = command_ptr;
-	}
-	// Separate along spaces - individual command
-	int t = 0;
-	while (args[t]) {
-	  char *commandArgs = args[t];
-	  int j = 0;
-	  while (commandArgs) {
-	    args2[j] = strsep(&commandArgs, " ");
-	    printf("%s\n", args2[j]);
-	    j++;
-	  }
-	  args2[j] = NULL; // add terminating null - necessary
-	  execvp(args2[0], args2);
-	  t++;
-	}
-
-  	exit(errno);
-      } else if (pid == -1) { // if subprocess failed
-  	printf("Subprocess error: %s\n", strerror(errno));
-      }
-    }
   }
-
   return 0;
 }
 
@@ -113,10 +54,10 @@ void pwd(char* cur_dir) {
 }
 
 // Trims whitespace, newlines, and tabs from strings
-void trim(char * str) {
+int trim(char * str) {
   // Return if string is empty
   if (!(*str)) {
-    return;
+    return -1;
   }
 
   // Trim leading space
@@ -127,7 +68,7 @@ void trim(char * str) {
   // All spaces?
   if( !(*start) ) {
     *str = '\0';
-    return;
+    return -1;
   }
   // Trim trailing space
   char* end = str + strlen(str) - 1;
@@ -144,12 +85,93 @@ void trim(char * str) {
 
   // Write new null terminator
   *str = '\0';
+
+  return 0;
+}
+
+// Parse based on semicolon
+int parse(char* command_ptr, char** args) {
+  int i = 0;
+  while (command_ptr) {
+    args[i] = strsep(&command_ptr, ";");
+    printf("Parse results: %s\n", args[i]);
+    i++;
+  }
+  return i;
 }
 
 // Gets the command from stdin
-void get_command(char * command, int size) {
-  fgets(command, size, stdin); // gets input from stream
-  trim(command);
+void get_terminal_commands(char *command_buffer, int size) {
+  fgets(command_buffer, size, stdin); // gets input from stream
+  trim(command_buffer);
+}
+
+int get_num_commands(char *command_ptr, char **array_of_commands) {
+  // Find the number of commands
+  if (strchr(command_ptr, ';')) { // Parse by semicolon
+    return parse(command_ptr, array_of_commands);
+  } else {
+    printf("Found single command.\n");
+    array_of_commands[0] = command_ptr;
+    return 1;
+  }
+}
+
+int run_terminal_commands(char *command_ptr, char **array_of_commands, char **array_of_arguments) {
+  // If no input is found, return -1
+  if (!(*command_ptr)) {
+    return -1;
+  }
+
+  int num_commands = get_num_commands(command_ptr, array_of_commands);
+
+  // For each command, run the command
+  int i;
+  for (i = 0; i < num_commands; i++) {
+    check_command_type(array_of_commands[i], array_of_arguments);
+  }
+  return 0;
+}
+
+int check_command_type(char *command_ptr, char** array_of_arguments) {
+  int pid;
+  pid_t status;
+
+  trim(command_ptr);
+
+  if ( strncmp(command_ptr, "cd ", 3) == 0 ) {
+    cd(command_ptr + 3); // CD to the specified directory
+  } else if ( strcmp(command_ptr, "exit") == 0 ) {
+    exit(0); // Exit shell
+  } else {
+    pid = fork(); // Fork process
+
+    if (pid > 0) { // if process is the parent process
+      wait(&status);
+      print_exit_status(status);
+    } else if (pid == 0) { // if process is child process
+      if (*command_ptr) {
+	execvp_commands(command_ptr, array_of_arguments); // execute command
+      }
+      exit(errno); // exit
+    } else if (pid < 0) { // if subprocess failed
+      printf("Subprocess error: %s\n", strerror(errno));
+    }
+  }
+  return 0;
+}
+
+// Execute command
+void execvp_commands(char* command_ptr, char** args) {
+  // Separate along spaces - individual command
+  int i = 0;
+  while (command_ptr) {
+    args[i] = strsep(&command_ptr, " ");
+    i++;
+  }
+  args[i] = NULL; // add terminating null - necessary
+
+  execvp(args[0], args);
 }
 
 // Prints the exit status of the child process
