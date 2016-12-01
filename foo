@@ -6,5 +6,6 @@ foo
 makefile
 README.md
 redirect.c
+redirect.c~
 shell.c
 shell.h

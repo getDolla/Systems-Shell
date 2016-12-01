@@ -10,6 +10,22 @@
 #include "cd.h"
 #include "shell.h"
 
+char isStdout = 0;
+char isStdin = 0;
+char isSterr = 0; 
+char isPipe = 0;
+
+void chkrdrect( char * arg ) {
+	if( !strcmp( arg, "2>" ) )
+		isSterr = 1;
+	else if( !strcmp( arg, ">" ) )
+		isStdout = 1;
+	else if( !strcmp( arg, "<" ) )
+		isStdin = 1;
+	else if( !strcmp( arg, "|" ) )
+		isPipe = 1;		
+}
+
 int main(int argc, char const *argv[]) {
   char command[100]; //for command
 
@@ -22,8 +38,6 @@ int main(int argc, char const *argv[]) {
   strtok(command, "\n");//gets rid of the \n at the end. will separate command into tokens if there is \n in the string
 
   int i = 0;
-  char isStdout, isStdin, isSterr = 0;
-  isStdout = isStdin = isSterr;
 
   p = command;
   printf("%s\n", p);//debug
