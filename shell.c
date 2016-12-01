@@ -89,6 +89,13 @@ int trim(char * str) {
   return 0;
 }
 
+void collapse(char str[], int i){ //use to remove whitespace in CD
+    while(str[i] == ' ') {
+            str[i] = str[i + 1];
+            i++;
+    }
+}
+
 // Parse based on semicolon
 int parse(char* command_ptr, char** args) {
   int i = 0;
@@ -140,6 +147,15 @@ int check_command_type(char *command_ptr, char** array_of_arguments) {
   trim(command_ptr);
 
   if ( strncmp(command_ptr, "cd ", 3) == 0 ) {
+    int i = 0;
+    printf("%s\n", command_ptr);
+    while (command_ptr[i] != '\0') { //gets rid of spaces between cd and the directory
+            if (command_ptr[i] == ' ' && command_ptr[i + 1] == ' '){
+              collapse(command_ptr, i);
+            }
+            i++;
+    }
+    printf("%s\n", command_ptr);
     cd(command_ptr + 3); // CD to the specified directory
   } else if ( strcmp(command_ptr, "exit") == 0 ) {
     exit(0); // Exit shell
