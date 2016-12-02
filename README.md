@@ -47,7 +47,7 @@ Handles the cd terminal command
 	current working directory to *dir
 
 
-Redirect.c
+Redirect Functions:
 Tests to see if there is a redirect symbol and if so send the
 arguments to their proper place
 
