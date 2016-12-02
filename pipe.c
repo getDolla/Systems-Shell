@@ -14,22 +14,40 @@
 #include <string.h>
 #include <errno.h>
 
-int main(){
-  int p[2];
-  pipe(p); // Creates a pipe with file descriptors Eg. input = 3 and output = 4 (Since, 0,1 and 2 are not available)
+int main(int argc, char *argv[]) {
+  int pipefd[2];
+  pid_t ls_pid, wc_pid;
 
-  if (fork() == 0) {
-    // Child process
-    close(1);
-    dup(p[1]); // Create duplicate of fd - 3 (pipe read end) with fd 0.
-    close(p[0]);
-    execlp("ls", "ls", NULL);
-  } else {
-    //Parent process
-    close(0);
-    dup(p[0]);
-    close(p[1]);
-    execlp("grep", "grep", "shell.c", NULL);
+  pipe(pipefd);
+
+  // this child is generating output to the pipe
+  //
+  if ((ls_pid = fork()) == 0) {
+    // attach stdout to the left side of pipe
+    // and inherit stdin and stdout from parent
+    dup2(pipefd[1],STDOUT_FILENO);
+    close(pipefd[0]);              // not using the right side
+
+    execl("/bin/ls", "ls","-al", NULL);
+    perror("exec ls failed");
+    exit(EXIT_FAILURE);
   }
-  return 0;
+
+  // this child is consuming input from the pipe
+  //
+  if ((wc_pid = fork()) == 0) {
+    // attach stdin to the right side of pipe
+    // and inherit stdout and stderr from parent
+    dup2(pipefd[0], STDIN_FILENO);
+
+    close(pipefd[1]);              // not using the left side
+    execl("/usr/bin/wc", "wc", NULL);
+    perror("exec wc failed");
+    exit(EXIT_FAILURE);
+  }
+
+  // explicitly not waiting for ls_pid here
+  // wc_pid isn't even my child, it belongs to ls_pid
+
+  return EXIT_SUCCESS;
 }

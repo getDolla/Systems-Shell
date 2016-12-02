@@ -5,4 +5,4 @@
  */
 int cd(char* dir);
 void chdir_with_tilde(char* dir);
-void print_working_dir();
+void pwd(char* cur_dir);

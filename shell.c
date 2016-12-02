@@ -52,15 +52,6 @@ int main(int argc, char *argv[]) {
   SHELL HELPER FUNCTIONS
   =====================================*/
 
-// Prints the current directory
-void pwd(char* cur_dir) {
-  getcwd(cur_dir, 1024);
-  if (errno) {
-    printf("Getcwd error: %s\n", strerror(errno));
-  }
-  printf("\n%s$ ", cur_dir);
-}
-
 // Trims whitespace, newlines, and tabs from strings
 int trim(char * str) {
   // Return if string is empty
@@ -97,11 +88,10 @@ int trim(char * str) {
   return 0;
 }
 
-void collapse(char str[], int i){ //use to remove whitespace in CD
-    while(str[i] == ' ') {
-      str[i] = str[i + 1];
-      i++;
-    }
+void collapse(char* str, int i){ //use to remove whitespace in CD
+  while(str[i] == ' ') {
+    str[i] = str[i + 1];
+  }
 }
 
 // Parse based on semicolon
@@ -157,11 +147,11 @@ int check_command_type(char *command_ptr, char* array_of_arguments[] ) {
   if ( strncmp(command_ptr, "cd ", 3) == 0 ) {
     int i = 0;
     printf("%s\n", command_ptr);
-    while (command_ptr[i] != '\0') { //gets rid of spaces between cd and the directory
+    while (command_ptr[i + 1] != '\0') { //gets rid of spaces between cd and the directory
       if (command_ptr[i] == ' ' && command_ptr[i + 1] == ' '){
-        collapse(command_ptr, i);
+        collapse(command_ptr, i + 1);
       }
-    i++;
+      i++;
     }
     printf("%s\n", command_ptr);
     cd(command_ptr + 3); // CD to the specified directory
@@ -194,9 +184,10 @@ void execvp_commands(char* command_ptr, char* args[]) {
 
   while (command_ptr) {
     args[i] = strsep(&command_ptr, " ");
-    //printf("%s\n", args[i]);//debug
-    if( chkrdrect(args[i]) )
-        break;
+    printf("Command: %s\n", command_ptr);//debug
+    if( chkrdrect(args[i]) ) {
+      break;
+    }
     i++;
   }
   args[i] = NULL; // add terminating null - necessary
@@ -207,78 +198,73 @@ void execvp_commands(char* command_ptr, char* args[]) {
 }
 
 char chkrdrect( char * arg ) {
-	if( !strcmp( arg, "2>" ) )
-		stdErr = 1;
-	else if( !strcmp( arg, "&>") )
-		stdErr = stdOut = 1;
-	else if( !strcmp( arg, ">>" ) )
-		isApp = stdOut = 1;
-	else if( !strcmp( arg, "2>>" ) )
-		isApp = stdErr = 1;
+  if( !strcmp( arg, "2>" ) )
+    stdErr = 1;
+  else if( !strcmp( arg, "&>") )
+    stdErr = stdOut = 1;
+  else if( !strcmp( arg, ">>" ) )
+    isApp = stdOut = 1;
+  else if( !strcmp( arg, "2>>" ) )
+    isApp = stdErr = 1;
   else if( !strcmp( arg, "&>>" ) )
     isApp = stdErr = stdOut = 1;
-	else if( !strcmp( arg, ">" ) )
-		stdOut = 1;
-	else if( !strcmp( arg, "<" ) )
-		stdIn = 1;
-	else if( !strcmp( arg, "|" ) )
-		isPipe = 1;
-	else
-		return 0;
+  else if( !strcmp( arg, ">" ) )
+    stdOut = 1;
+  else if( !strcmp( arg, "<" ) )
+    stdIn = 1;
+  else if( !strcmp( arg, "|" ) )
+    isPipe = 1;
+  else
+    return 0;
 
-	return 1;
+  return 1;
 }
 
 int dupFD( char* p ) {
 
-	if( !(stdOut || stdIn || stdErr || isPipe) )
-		return -1;
+  if( !(stdOut || stdIn || stdErr || isPipe) )
+    return -1;
 
-	/* For pipe */
-	//
-	//
-	//
+  int fd = isApp?open( p, O_CREAT | O_APPEND | O_WRONLY ):open( p, O_CREAT | O_WRONLY );
+  int copy = dup(fd);
 
-	int fd = isApp?open( p, O_CREAT | O_APPEND | O_WRONLY ):open( p, O_CREAT | O_WRONLY );
-	int copy = dup(fd);
-
-	if( stdOut ) {
+  if( stdOut ) {
     stdOut = dup(1);
     dup2(copy, 1);
-		copy = dup(fd);
+    copy = dup(fd);
   }
 
-	if( stdErr ) {
-		stdErr = dup(2);
+  if( stdErr ) {
+    stdErr = dup(2);
     dup2(copy, 2);
-		copy = dup(fd);
-	}
+    copy = dup(fd);
+  }
 
-	if( stdIn ) {
-		stdIn = dup(0);
+  if( stdIn ) {
+    stdIn = dup(0);
     dup2(copy, 0);
-		copy = dup(fd);
-	}
-	close(copy);
+    copy = dup(fd);
+  }
+  close(copy);
 
-	return fd;
+  return fd;
 }
 
 void revertFD( int fd ) {
-	if( fd == -1 )
-		return;
+  if( fd == -1 )
+    return;
 
-	if( stdOut )
-	  dup2(stdOut, 1);
+  if( stdOut )
+    dup2(stdOut, 1);
 
-	if( stdErr )
-		dup2(stdErr, 2);
+  if( stdErr )
+    dup2(stdErr, 2);
 
-	if( stdIn )
-		dup2(stdIn, 0);
+  if( stdIn )
+    dup2(stdIn, 0);
 
-	stdOut = stdErr = stdIn = 0;
-	close(fd);
+  stdOut = stdErr = stdIn = 0;
+  close(fd);
 }
 
 // Prints the exit status of the child process
@@ -290,31 +276,3 @@ void print_exit_status(int status) {
     }
   }
 }
-
-
-/*===================================
-  SHELL TESTING
-  =====================================*/
-
-/* int main() { */
-/*   char test[] = " Test start "; */
-/*   char test2[] = "\n \n \n \t \t \t Alright testing   "; */
-/*   char test3[] = "\n \t\n\t \t ok test3 \n\n\n\n\n\t \t\t\t\t\t \n \t \t \t "; */
-/*   char test4[] = ""; */
-/*   char test5[] = "__regex"; */
-/*   char test6[] = "            \n\n\n      Word.             "; */
-/*   trim(test); */
-/*   trim(test2); */
-/*   trim(test3); */
-/*   trim(test4); */
-/*   trim(test5); */
-/*   trim(test6); */
-
-/*   printf("\n%s %s %s %s %s %s Test done!\n\n", test, test2, test3, test4, test5, test6); */
-/*   printf("--%s--\n", test); */
-/*   printf("--%s--\n", test2); */
-/*   printf("--%s--\n", test3); */
-/*   printf("--%s--\n", test4); */
-/*   printf("--%s--\n", test5); */
-/*   printf("--%s--\n", test6); */
-/* } */
