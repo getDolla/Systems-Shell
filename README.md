@@ -61,7 +61,7 @@ arguments to their proper place
 	influence how the program will run
 
 
-####int dupFD()===================
+####int dupFD()
 	Input: Command Argument
 	Returns: A file
 
