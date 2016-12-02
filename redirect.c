@@ -10,25 +10,25 @@
 #include "cd.h"
 #include "shell.h"
 
-char isStdout = 0;
-char isStdin = 0;
-char isSterr = 0;
+int stdOut = 0;
+int stdIn = 0;
+int stdErr = 0;
 char isApp = 0;
 char isPipe = 0;
 
 char chkrdrect( char * arg ) {
 	if( !strcmp( arg, "2>" ) )
-		isSterr = 1;
+		stdErr = 1;
 	else if( !strcmp( arg, "&>") )
-		isSterr = isStdout = 1;
+		stdErr = stdOut = 1;
 	else if( !strcmp( arg, ">>" ) )
-		isApp = isStdout = 1;
+		isApp = stdOut = 1;
 	else if( !strcmp( arg, "2>>" ) )
-		isApp = isSterr = 1;
+		isApp = stdErr = 1;
 	else if( !strcmp( arg, ">" ) )
-		isStdout = 1;
+		stdOut = 1;
 	else if( !strcmp( arg, "<" ) )
-		isStdin = 1;
+		stdIn = 1;
 	else if( !strcmp( arg, "|" ) )
 		isPipe = 1;
 	else
@@ -39,7 +39,7 @@ char chkrdrect( char * arg ) {
 
 int dupFD( char* p ) {
 
-	if( !(isStdout || isStdin || isSterr || isPipe) )
+	if( !(stdOut || stdIn || stdErr || isPipe) )
 		return -1;
 
 	/* For pipe */
@@ -48,39 +48,44 @@ int dupFD( char* p ) {
 	//
 
 	int fd = isApp?open( p, O_CREAT | O_APPEND | O_WRONLY ):open( p, O_CREAT | O_WRONLY );
-	dup(fd);
+	int copy = dup(fd);
 
-	if( isStdout ) {
-    dup(1);
-    dup2(fd+2, 1);
+	if( stdOut ) {
+    stdOut = dup(1);
+    dup2(copy, 1);
+		copy = dup(fd);
   }
 
-	if( isSterr ) {
-		dup(2);
-    dup2(fd+2, 2);
+	if( stdErr ) {
+		stdErr = dup(2);
+    dup2(copy, 2);
+		copy = dup(fd);
 	}
 
-	if( isStdin ) {
-		dup(0);
-    dup2(fd+2, 0);
+	if( stdIn ) {
+		stdIn = dup(0);
+    dup2(copy, 0);
+		copy = dup(fd);
 	}
+	close(copy);
 
 	return fd;
 }
 
 void revertFD( int fd ) {
-	if( !(isStdout || isStdin || isSterr || isPipe) )
+	if( fd == -1 )
 		return;
 
-	if( isStdout )
-	  dup2(fd+1, 1);
+	if( stdOut )
+	  dup2(stdOut, 1);
 
-	if( isSterr )
-		dup2(fd+1, 2);
+	if( stdErr )
+		dup2(stdErr, 2);
 
-	if( isStdin )
-		dup2(fd+1, 0);
+	if( stdIn )
+		dup2(stdIn, 0);
 
+	stdOut = stdErr = stdIn = 0;
 	close(fd);
 }
 
@@ -111,10 +116,8 @@ int main(int argc, char const *argv[]) {
   args[i] = NULL;//add terminating null in place of redirect symbol or just in case
 
   int fd = dupFD( p );
-
   execvp(args[0], args);
-
-  revertFD( fd );
+	revertFD( fd );
 
   return 0;
 }
