@@ -10,7 +10,11 @@
 #include "cd.h"
 #include "shell.h"
 
-char isStdout, isStdin, isSterr, isApp, isPipe;
+char isStdout = 0;
+char isStdin = 0;
+char isSterr = 0;
+char isApp = 0;
+char isPipe = 0;
 
 char chkrdrect( char * arg ) {
 	if( !strcmp( arg, "2>" ) )
