@@ -91,8 +91,8 @@ int trim(char * str) {
 
 void collapse(char str[], int i){ //use to remove whitespace in CD
     while(str[i] == ' ') {
-            str[i] = str[i + 1];
-            i++;
+      str[i] = str[i + 1];
+      i++;
     }
 }
 
@@ -150,10 +150,10 @@ int check_command_type(char *command_ptr, char** array_of_arguments) {
     int i = 0;
     printf("%s\n", command_ptr);
     while (command_ptr[i] != '\0') { //gets rid of spaces between cd and the directory
-            if (command_ptr[i] == ' ' && command_ptr[i + 1] == ' '){
-              collapse(command_ptr, i);
-            }
-            i++;
+      if (command_ptr[i] == ' ' && command_ptr[i + 1] == ' '){
+        collapse(command_ptr, i);
+      }
+    i++;
     }
     printf("%s\n", command_ptr);
     cd(command_ptr + 3); // CD to the specified directory
