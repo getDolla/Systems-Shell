@@ -63,7 +63,7 @@ arguments to their proper place
 
 ####int dupFD()
 	Input: Command Argument
-	Returns: A file
+	Returns: A file descriptor
 
 
 	Allows for read, write, create, and append commands
@@ -75,4 +75,4 @@ arguments to their proper place
 	Returns: Nothing
 
 
-	Changes standard in and out
+	Changes standard in, out, and error back to original places.
