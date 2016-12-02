@@ -10,3 +10,7 @@ int check_command_type(char *command_ptr, char** array_of_arguments);
 void execvp_commands(char* command_ptr, char** args2);
 
 void print_exit_status(int status);
+
+char chkrdrect( char * arg );
+int dupFD( char* p );
+void revertFD( int fd );

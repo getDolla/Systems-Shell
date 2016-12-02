@@ -14,6 +14,9 @@
 #include <string.h>
 #include <errno.h>
 
+/* Global variables */
+char isStdout, isStdin, isSterr, isApp, isPipe;
+
 /*===================================
   MAIN SHELL
   =====================================*/
@@ -167,11 +170,88 @@ void execvp_commands(char* command_ptr, char** args) {
   int i = 0;
   while (command_ptr) {
     args[i] = strsep(&command_ptr, " ");
+    printf("%s\n", p);//debug
+    if( chkrdrect(args[i]) )
+        break;
     i++;
   }
   args[i] = NULL; // add terminating null - necessary
 
+  int fd = dupFD( p );
   execvp(args[0], args);
+  revertFD( fd );
+}
+
+char chkrdrect( char * arg ) {
+	if( !strcmp( arg, "2>" ) )
+		isSterr = 1;
+	else if( !strcmp( arg, "&>") )
+		isSterr = isStdout = 1;
+	else if( !strcmp( arg, ">>" ) )
+		isApp = isStdout = 1;
+	else if( !strcmp( arg, "2>>" ) )
+		isApp = isSterr = 1;
+	else if( !strcmp( arg, ">" ) )
+		isStdout = 1;
+	else if( !strcmp( arg, "<" ) )
+		isStdin = 1;
+	else if( !strcmp( arg, "|" ) )
+		isPipe = 1;
+	else
+		return 0;
+
+	return 1;
+}
+
+int dupFD( char* p ) {
+	if( !(isStdout || isStdin || isSterr || isPipe) )
+		return -1;
+
+	/* For pipe */
+	//
+	//
+	//
+
+	int fd = isApp?open( p, O_CREAT | O_APPEND | O_WRONLY ):open( p, O_CREAT | O_WRONLY );
+
+	if( isStdout ) {
+    dup(1);
+    dup2(fd, 1);
+  }
+
+	if( isSterr ) {
+		dup(2);
+    dup2(fd, 2);
+	}
+
+	if( isStdin ) {
+		dup(0);
+    dup2(fd, 0);
+	}
+
+	return fd;
+}
+
+void revertFD( int fd ) {
+	if( !(isStdout || isStdin || isSterr || isPipe) )
+		return;
+
+	if( isStdout ) {
+	  dup2(fd+1, 1);
+		close(fd+1);
+	}
+
+	if( isSterr ) {
+		dup2(fd+1, 2);
+		close(fd+1);
+	}
+
+	if( isStdin ) {
+		dup2(fd+1, 0);
+		close(fd+1);
+	}
+
+	close(fd);
 }
 
 // Prints the exit status of the child process
