@@ -23,6 +23,7 @@ Bugs
 Files & Function Headers:
 cd.c
 Handles the cd terminal command
+
 /*========void print_working_dir()==============
 Inputs: None
 Returns: current working directory
@@ -52,6 +53,7 @@ current working directory to *dir
 Redirect.c
 Tests to see if there is a redirect symbol and if so send the
 arguments to their proper place
+
 /*========char chkrdrect()================
 Inputs: Arguments
 Returns: Nothing
