@@ -211,6 +211,8 @@ char chkrdrect( char * arg ) {
 		isApp = stdOut = 1;
 	else if( !strcmp( arg, "2>>" ) )
 		isApp = stdErr = 1;
+  else if( !strcmp( arg, "&>>" ) )
+    isApp = stdErr = stdOut = 1;
 	else if( !strcmp( arg, ">" ) )
 		stdOut = 1;
 	else if( !strcmp( arg, "<" ) )
