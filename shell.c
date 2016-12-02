@@ -105,7 +105,7 @@ void collapse(char str[], int i){ //use to remove whitespace in CD
 }
 
 // Parse based on semicolon
-int parse(char* command_ptr, char** args) {
+int parse(char* command_ptr, char* args[]) {
   int i = 0;
   while (command_ptr) {
     args[i] = strsep(&command_ptr, ";");
@@ -121,7 +121,7 @@ void get_terminal_commands(char *command_buffer, int size) {
   trim(command_buffer);
 }
 
-int get_num_commands(char *command_ptr, char **array_of_commands) {
+int get_num_commands(char *command_ptr, char * array_of_commands[]) {
   // Find the number of commands
   if (strchr(command_ptr, ';')) { // Parse by semicolon
     return parse(command_ptr, array_of_commands);
@@ -132,7 +132,7 @@ int get_num_commands(char *command_ptr, char **array_of_commands) {
   }
 }
 
-int run_terminal_commands(char *command_ptr, char **array_of_commands, char **array_of_arguments) {
+int run_terminal_commands(char *command_ptr, char *array_of_commands[], char *array_of_arguments[] ) {
   // If no input is found, return -1
   if (!(*command_ptr)) {
     return -1;
@@ -148,7 +148,7 @@ int run_terminal_commands(char *command_ptr, char **array_of_commands, char **ar
   return 0;
 }
 
-int check_command_type(char *command_ptr, char** array_of_arguments) {
+int check_command_type(char *command_ptr, char* array_of_arguments[] ) {
   int pid;
   pid_t status;
 
@@ -175,6 +175,7 @@ int check_command_type(char *command_ptr, char** array_of_arguments) {
       print_exit_status(status);
     } else if (pid == 0) { // if process is child process
       if (*command_ptr) {
+        //printf("%s\n", command_ptr );
 	execvp_commands(command_ptr, array_of_arguments); // execute command
       }
       exit(errno); // exit
@@ -186,12 +187,14 @@ int check_command_type(char *command_ptr, char** array_of_arguments) {
 }
 
 // Execute command
-void execvp_commands(char* command_ptr, char** args) {
+void execvp_commands(char* command_ptr, char* args[]) {
   // Separate along spaces - individual command
   int i = 0;
+  //printf("%s - %d\n", command_ptr, command_ptr == NULL );
+
   while (command_ptr) {
     args[i] = strsep(&command_ptr, " ");
-    printf("%s\n", command_ptr);//debug
+    //printf("%s\n", args[i]);//debug
     if( chkrdrect(args[i]) )
         break;
     i++;
@@ -199,7 +202,7 @@ void execvp_commands(char* command_ptr, char** args) {
   args[i] = NULL; // add terminating null - necessary
 
   int fd = dupFD( command_ptr );
-  execvp(args[0], args);
+  if ( execvp(args[0], args) == -1 ) printf("Error: %d - %s\n", errno, strerror(errno));
   revertFD( fd );
 }
 
