@@ -4,14 +4,13 @@
 #include <string.h>
 #include <errno.h>
 
-void print_working_dir() {
-  char cwd[1024];
-  if (getcwd(cwd, sizeof(cwd)) != NULL) {
-    printf("Current working dir: %s\n", cwd);
-  }
+// Prints the current directory
+void pwd(char* cur_dir) {
+  getcwd(cur_dir, 1024);
   if (errno) {
-    printf("Error cwd: %s\n", strerror(errno));
+    printf("Getcwd error: %s\n", strerror(errno));
   }
+  printf("\n%s$ ", cur_dir);
 }
 
 void chdir_with_tilde(char* dir) {
@@ -38,18 +37,5 @@ int cd(char* dir) {
     printf("Error chdir: %s\n", strerror(errno));
   }
 
-  print_working_dir();
-
   return 0;
 }
-
-/* int main() { */
-/*   cd(".."); */
-/*   cd("~/Desktop"); */
-/*   cd("/"); */
-/*   cd(".."); */
-/*   cd("~/Desktop"); */
-/*   cd("../Downloads"); */
-/*   cd("~"); */
-/*   return 0; */
-/* } */
