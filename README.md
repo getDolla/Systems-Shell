@@ -10,13 +10,13 @@ Forks and Executes multiple commands separated by semicolons
   Returns information as to what and the number of commands put in
 
 
-Attempted
+Attempted:
 	Tried to stop control C form exiting from the shell. Instead it was supposed to create a
 new bash
 Allow the shell to run cd when the file was separated by multiple spaces  
 
 
-Bugs
+Bugs:
 	Cannot handle CD when separated by multiple spaces
 
 
