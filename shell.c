@@ -224,6 +224,7 @@ char chkrdrect( char * arg ) {
 }
 
 int dupFD( char* p ) {
+
 	if( !(isStdout || isStdin || isSterr || isPipe) )
 		return -1;
 
@@ -233,20 +234,21 @@ int dupFD( char* p ) {
 	//
 
 	int fd = isApp?open( p, O_CREAT | O_APPEND | O_WRONLY ):open( p, O_CREAT | O_WRONLY );
+	dup(fd);
 
 	if( isStdout ) {
     dup(1);
-    dup2(fd, 1);
+    dup2(fd+2, 1);
   }
 
 	if( isSterr ) {
 		dup(2);
-    dup2(fd, 2);
+    dup2(fd+2, 2);
 	}
 
 	if( isStdin ) {
 		dup(0);
-    dup2(fd, 0);
+    dup2(fd+2, 0);
 	}
 
 	return fd;
@@ -256,20 +258,14 @@ void revertFD( int fd ) {
 	if( !(isStdout || isStdin || isSterr || isPipe) )
 		return;
 
-	if( isStdout ) {
+	if( isStdout )
 	  dup2(fd+1, 1);
-		close(fd+1);
-	}
 
-	if( isSterr ) {
+	if( isSterr )
 		dup2(fd+1, 2);
-		close(fd+1);
-	}
 
-	if( isStdin ) {
+	if( isStdin )
 		dup2(fd+1, 0);
-		close(fd+1);
-	}
 
 	close(fd);
 }
