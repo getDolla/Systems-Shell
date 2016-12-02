@@ -3,6 +3,7 @@
 /* Several system functions */
 #include <unistd.h>
 #include <sys/types.h>
+#include <fcntl.h>
 /* For wait function */
 #include <sys/wait.h>
 /* For isspace function */
@@ -190,14 +191,14 @@ void execvp_commands(char* command_ptr, char** args) {
   int i = 0;
   while (command_ptr) {
     args[i] = strsep(&command_ptr, " ");
-    printf("%s\n", p);//debug
+    printf("%s\n", command_ptr);//debug
     if( chkrdrect(args[i]) )
         break;
     i++;
   }
   args[i] = NULL; // add terminating null - necessary
 
-  int fd = dupFD( p );
+  int fd = dupFD( command_ptr );
   execvp(args[0], args);
   revertFD( fd );
 }
