@@ -24,37 +24,37 @@ Files & Function Headers:
 cd.c
 Handles the cd terminal command
 
-/*========void print_working_dir()==============
+========void print_working_dir()==============
 Inputs: None
 Returns: current working directory
-================*/
+================
 
 
-/*=======void chdir_with_tilde()==========
+=======void chdir_with_tilde()==========
 Inputs: New working directory with a tilde
 Returns: Nothing
 
 
 If a correct directory is give the program changes the
 current working directory to *dir
-======================*/
+======================
 
 
-/*==========int cd()======================
+==========int cd()======================
 Inputs: New working directory
 Returns: Nothing
 
 
 If a correct directory is give the program changes the
 current working directory to *dir
-=========================*/
+=========================
 
 
 Redirect.c
 Tests to see if there is a redirect symbol and if so send the
 arguments to their proper place
 
-/*========char chkrdrect()================
+========char chkrdrect()================
 Inputs: Arguments
 Returns: Nothing
 
@@ -62,23 +62,23 @@ Returns: Nothing
 Checks for specific redirect symbols and if one is
 found it turns on a series of boolean holders that will
 influence how the program will run
-================================*/
+================================
 
 
-/*=======int dupFD()===================
+=======int dupFD()===================
 Input: Command Argument
 Returns: A file
 
 
 Allows for read, write, create, and append commands
 to be run.
-===========================*/
+===========================
 
 
-/*====void revertFD()===================
+====void revertFD()===================
 Input: The file that needs to be changed
 Returns: Nothing
 
 
 Changes standard in and out
-=================================*/
+=================================
