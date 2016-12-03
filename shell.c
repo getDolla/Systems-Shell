@@ -134,13 +134,7 @@ int run_terminal_commands(char *command_ptr, char **array_of_commands, char **ar
   // For each command, run the command
   int i;
   for (i = 0; i < num_commands; i++) {
-    if (strstr(array_of_commands[i], " | ")) {
-      printf("Found pipe\n");
-      parse_pipes(array_of_commands[i], array_of_arguments);
-    } else {
-      check_command_type(array_of_commands[i], array_of_arguments);
-    }
-    printf("Command\n");
+    check_command_type(array_of_commands[i], array_of_arguments);
   }
   return 0;
 }
@@ -163,7 +157,10 @@ int check_command_type(char *command_ptr, char** array_of_arguments) {
       print_exit_status(status);
     } else if (pid == 0) { // if process is child process
       if (*command_ptr) {
-	execvp_commands(command_ptr, array_of_arguments); // execute command
+        if ( strstr(command_ptr, " | ") ) {
+          parse_pipes(command_ptr, array_of_arguments);
+        }
+	       else execvp_commands(command_ptr, array_of_arguments); // execute command
       }
       exit(errno); // exit
     } else if (pid < 0) { // if subprocess failed
@@ -219,46 +216,70 @@ char chkrdrect( char * arg ) {
   return 1;
 }
 
+void strCmd( char * ptr, char* args[]) {
+  int i = 0;
+  while (ptr) {
+      args[i] = strsep(&ptr, " ");
+      //printf("%s\n", args[i] );
+      i++;
+  }
+
+  args[i] = NULL;
+}
+
 //Allows for read, write, create, and append commands to be run.
-int parse_pipes(char * command_with_pipes, char** args) {
-  char * command1 = strsep(&command_with_pipes, " | ");
-  char * command2 = command_with_pipes + 2;
-
-  //printf("%s\n", command2);
-
-  int pipefd[2];
-  pid_t pid, pid2;
-
-  pipe(pipefd);
-
-  pid = fork();
-  if (pid == 0) {
-    dup2(pipefd[1],STDOUT_FILENO);
-    close(pipefd[0]);
-
-    execvp_commands(command1, args);
-
-    exit(0);
+int parse_pipes(char * command_ptr, char* args[]) {
+  int pid, i = 0;
+  while (command_ptr) {
+      args[i] = strsep(&command_ptr, " ");
+      //printf("%s\n", args[i] );
+      if( !strcmp(args[i], "|") ) {
+        //printf("%s\n", command_ptr );
+        break;
+      }
+      i++;
   }
 
-  pid2 = fork();
-  if (pid2 == 0) {
-    dup2(pipefd[0], STDIN_FILENO);
-    close(pipefd[1]);
+  args[i] = NULL;
 
-    execvp_commands(command2, args);
+  for(i = 2; i > 0; i--) {
+    pid = fork();
+      if (pid > 0) {
+        wait(0);
+      }
+      else {
+        if( i == 2 ) {
+          int fd = open( ".file", O_CREAT|O_WRONLY );
+          stdOut = dup(1);
+          dup2(fd, 1);
 
-    exit(0);
+          execvp( args[0], args );
+          dup2(stdOut, 1);
+          stdOut = 0;
+        }
+
+        else {
+          int fd = open( ".file", O_CREAT|O_RDONLY );
+          stdIn = dup(0);
+          dup2(fd, 0);
+
+          char* args2[10];
+          strCmd( command_ptr, args2 );
+
+          execvp( args2[0], args2 );
+
+          dup2(stdIn, 0);
+          stdIn = 0;
+      }
+        exit(0);
+    }
   }
 
-  close(pipefd[0]);
-  close(pipefd[1]);
-
+  execlp("rm", "rm", "-f", ".file", NULL);
   return 0;
 }
 
 int get_num_pipes(char* command) {
-  printf("Pipes command: %s\n", command);
   char* tmp = command;
 
   int i = 0;
@@ -269,7 +290,6 @@ int get_num_pipes(char* command) {
       i++;
     }
   }
-  printf("%d\n", i);
 
   return i;
 }
