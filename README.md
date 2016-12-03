@@ -13,12 +13,12 @@ Forks and Executes multiple commands separated by semicolons
 Attempted:
 	Tried to stop control C form exiting from the shell. Instead it was supposed to create a
 new bash
-Allow the shell to run cd when the file was separated by multiple spaces  
+Allow the shell to run cd when the file was separated by multiple spaces
 
 
 Bugs:
 	Cannot handle CD when separated by multiple spaces
-
+	Piping doesn't always work (ls | wc works), and	the prompt may not show until you enter in another command
 
 Files & Function Headers:
 cd.c
@@ -130,5 +130,5 @@ Main File: Function Headers
 ####void print_exit_status(int status)
 	Input: status
 	Returns: None
-	
+
 	Prints the exit status of the child process
