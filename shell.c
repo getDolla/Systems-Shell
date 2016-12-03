@@ -301,9 +301,9 @@ int dupFD( char* p ) {
 
   int fd;
   if (isApp) {
-    fd = open( p, O_CREAT | O_APPEND | O_WRONLY, 0664 );
+    fd = open( p, O_CREAT | O_APPEND | O_RDWR, 0664 );
   } else{
-    fd = open( p, O_CREAT | O_WRONLY, 0664 );
+    fd = open( p, O_CREAT | O_RDWR, 0664 );
   }
   int copy = dup(fd);
 
