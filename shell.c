@@ -3,6 +3,7 @@
 /* Several system functions */
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 /* For wait function */
 #include <sys/wait.h>
@@ -27,6 +28,8 @@ char isPipe = 0;
   =====================================*/
 
 int main(int argc, char *argv[]) {
+  umask(0113);
+
   char cur_dir[1024]; // stores current directory
 
   char command[1024]; // command buffer
@@ -88,14 +91,8 @@ int trim(char * str) {
   return 0;
 }
 
-void collapse(char* str, int i){ //use to remove whitespace in CD
-  while(str[i] == ' ') {
-    str[i] = str[i + 1];
-  }
-}
-
 // Parse based on semicolon
-int parse(char* command_ptr, char* args[]) {
+int parse(char* command_ptr, char** args) {
   int i = 0;
   while (command_ptr) {
     args[i] = strsep(&command_ptr, ";");
@@ -105,14 +102,18 @@ int parse(char* command_ptr, char* args[]) {
   return i;
 }
 
+/*===================================
+  SHELL HELPER FUNCTIONS
+  =====================================*/
+
 // Gets the command from stdin
 void get_terminal_commands(char *command_buffer, int size) {
   fgets(command_buffer, size, stdin); // gets input from stream
   trim(command_buffer);
 }
 
-// Find the number of commands
-int get_num_commands(char *command_ptr, char * array_of_commands[]) {
+int get_num_commands(char *command_ptr, char ** array_of_commands) {
+  // Find the number of commands
   if (strchr(command_ptr, ';')) { // Parse by semicolon
     return parse(command_ptr, array_of_commands);
   } else {
@@ -122,7 +123,7 @@ int get_num_commands(char *command_ptr, char * array_of_commands[]) {
   }
 }
 
-int run_terminal_commands(char *command_ptr, char *array_of_commands[], char *array_of_arguments[] ) {
+int run_terminal_commands(char *command_ptr, char **array_of_commands, char **array_of_arguments) {
   // If no input is found, return -1
   if (!(*command_ptr)) {
     return -1;
@@ -133,27 +134,24 @@ int run_terminal_commands(char *command_ptr, char *array_of_commands[], char *ar
   // For each command, run the command
   int i;
   for (i = 0; i < num_commands; i++) {
-    check_command_type(array_of_commands[i], array_of_arguments);
+    if (strstr(array_of_commands[i], " | ")) {
+      printf("Found pipe\n");
+      parse_pipes(array_of_commands[i], array_of_arguments);
+    } else {
+      check_command_type(array_of_commands[i], array_of_arguments);
+    }
+    printf("Command\n");
   }
   return 0;
 }
 
-int check_command_type(char *command_ptr, char* array_of_arguments[] ) {
+int check_command_type(char *command_ptr, char** array_of_arguments) {
   int pid;
   pid_t status;
 
   trim(command_ptr);
 
   if ( strncmp(command_ptr, "cd ", 3) == 0 ) {
-    int i = 0;
-    printf("%s\n", command_ptr);
-    while (command_ptr[i + 1] != '\0') { //gets rid of spaces between cd and the directory
-      if (command_ptr[i] == ' ' && command_ptr[i + 1] == ' '){
-        collapse(command_ptr, i + 1);
-      }
-      i++;
-    }
-    printf("%s\n", command_ptr);
     cd(command_ptr + 3); // CD to the specified directory
   } else if ( strcmp(command_ptr, "exit") == 0 ) {
     exit(0); // Exit shell
@@ -165,7 +163,6 @@ int check_command_type(char *command_ptr, char* array_of_arguments[] ) {
       print_exit_status(status);
     } else if (pid == 0) { // if process is child process
       if (*command_ptr) {
-        //printf("%s\n", command_ptr );
 	execvp_commands(command_ptr, array_of_arguments); // execute command
       }
       exit(errno); // exit
@@ -177,10 +174,9 @@ int check_command_type(char *command_ptr, char* array_of_arguments[] ) {
 }
 
 // Execute command
-void execvp_commands(char* command_ptr, char* args[]) {
+void execvp_commands(char* command_ptr, char** args) {
   // Separate along spaces - individual command
   int i = 0;
-  //printf("%s - %d\n", command_ptr, command_ptr == NULL );
 
   while (command_ptr) {
     args[i] = strsep(&command_ptr, " ");
@@ -193,11 +189,15 @@ void execvp_commands(char* command_ptr, char* args[]) {
   args[i] = NULL; // add terminating null - necessary
 
   int fd = dupFD( command_ptr );
-  if ( execvp(args[0], args) == -1 ) printf("Error: %d - %s\n", errno, strerror(errno));
+  execvp(args[0], args);
   revertFD( fd );
 }
 
 //Checks for specific redirect symbols and if one is found it turns on a series of boolean holders that will influence how the program will run
+/*===================================
+  SHELL HELPER FUNCTIONS
+  =====================================*/
+
 char chkrdrect( char * arg ) {
   if( !strcmp( arg, "2>" ) )
     stdErr = 1;
@@ -213,8 +213,6 @@ char chkrdrect( char * arg ) {
     stdOut = 1;
   else if( !strcmp( arg, "<" ) )
     stdIn = 1;
-  else if( !strcmp( arg, "|" ) )
-    isPipe = 1;
   else
     return 0;
 
@@ -222,12 +220,71 @@ char chkrdrect( char * arg ) {
 }
 
 //Allows for read, write, create, and append commands to be run.
+int parse_pipes(char * command_with_pipes, char** args) {
+  char * command1 = strsep(&command_with_pipes, " | ");
+  char * command2 = command_with_pipes + 2;
+
+  //printf("%s\n", command2);
+
+  int pipefd[2];
+  pid_t pid, pid2;
+
+  pipe(pipefd);
+
+  pid = fork();
+  if (pid == 0) {
+    dup2(pipefd[1],STDOUT_FILENO);
+    close(pipefd[0]);
+
+    execvp_commands(command1, args);
+
+    exit(0);
+  }
+
+  pid2 = fork();
+  if (pid2 == 0) {
+    dup2(pipefd[0], STDIN_FILENO);
+    close(pipefd[1]);
+
+    execvp_commands(command2, args);
+
+    exit(0);
+  }
+
+  close(pipefd[0]);
+  close(pipefd[1]);
+
+  return 0;
+}
+
+int get_num_pipes(char* command) {
+  printf("Pipes command: %s\n", command);
+  char* tmp = command;
+
+  int i = 0;
+  while (tmp) {
+    tmp = strstr(tmp, " | ");
+    if (tmp) {
+      tmp += 3;
+      i++;
+    }
+  }
+  printf("%d\n", i);
+
+  return i;
+}
+
 int dupFD( char* p ) {
 
   if( !(stdOut || stdIn || stdErr || isPipe) )
     return -1;
 
-  int fd = isApp?open( p, O_CREAT | O_APPEND | O_WRONLY ):open( p, O_CREAT | O_WRONLY );
+  int fd;
+  if (isApp) {
+    fd = open( p, O_CREAT | O_APPEND | O_WRONLY, 0664 );
+  } else{
+    fd = open( p, O_CREAT | O_WRONLY, 0664 );
+  }
   int copy = dup(fd);
 
   if( stdOut ) {
