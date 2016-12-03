@@ -53,9 +53,9 @@ Redirect Functions:
 Tests to see if there is a redirect symbol and if so send the
 arguments to their proper place
 
-####char chkrdrect()
-	Inputs: Arguments
-	Returns: Nothing
+####char chkrdrect(char * arg)
+	Inputs: argument
+	Returns: 0 or 1
 
 
 	Checks for specific redirect symbols and if one is
@@ -78,6 +78,26 @@ arguments to their proper place
 
 
 	Changes standard in, out, and error back to original places.
+
+Pipe functions:
+Implements pipe functionality for the shell
+####void strCmd(char * ptr, char * args[])
+	Input: Command pointer
+	Returns: nothing
+
+	Separates the arguments based on spaces
+
+####int parse_pipes(char * command_ptr, char* args[])
+	Input: Command, arguments array
+	Returns: 0
+
+	Parses the command for any pipes and pipes commands together
+
+####int get_num_pipes(char* command)
+	Input: Command
+	Returns: number of pipes
+
+	Returns the number of pipes in the command
 
 Main File: Function Headers
 
