@@ -99,7 +99,7 @@ int parse(char* command_ptr, char* args[]) {
   int i = 0;
   while (command_ptr) {
     args[i] = strsep(&command_ptr, ";");
-    printf("Parse results: %s\n", args[i]);
+    //printf("Parse results: %s\n", args[i]);
     i++;
   }
   return i;
@@ -111,12 +111,12 @@ void get_terminal_commands(char *command_buffer, int size) {
   trim(command_buffer);
 }
 
+// Find the number of commands
 int get_num_commands(char *command_ptr, char * array_of_commands[]) {
-  // Find the number of commands
   if (strchr(command_ptr, ';')) { // Parse by semicolon
     return parse(command_ptr, array_of_commands);
   } else {
-    printf("Found single command.\n");
+    //printf("Found single command.\n");
     array_of_commands[0] = command_ptr;
     return 1;
   }
@@ -184,7 +184,7 @@ void execvp_commands(char* command_ptr, char* args[]) {
 
   while (command_ptr) {
     args[i] = strsep(&command_ptr, " ");
-    printf("Command: %s\n", command_ptr);//debug
+    //printf("Command: %s\n", command_ptr);//debug
     if( chkrdrect(args[i]) ) {
       break;
     }
@@ -197,6 +197,7 @@ void execvp_commands(char* command_ptr, char* args[]) {
   revertFD( fd );
 }
 
+//Checks for specific redirect symbols and if one is found it turns on a series of boolean holders that will influence how the program will run
 char chkrdrect( char * arg ) {
   if( !strcmp( arg, "2>" ) )
     stdErr = 1;
@@ -220,6 +221,7 @@ char chkrdrect( char * arg ) {
   return 1;
 }
 
+//Allows for read, write, create, and append commands to be run.
 int dupFD( char* p ) {
 
   if( !(stdOut || stdIn || stdErr || isPipe) )
@@ -250,6 +252,7 @@ int dupFD( char* p ) {
   return fd;
 }
 
+//Changes standard in, out, and error back to original places.
 void revertFD( int fd ) {
   if( fd == -1 )
     return;
