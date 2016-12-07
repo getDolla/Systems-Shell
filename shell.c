@@ -154,7 +154,6 @@ int check_command_type(char *command_ptr, char** array_of_arguments) {
 
     if (pid > 0) { // if process is the parent process
       wait(&status);
-      print_exit_status(status);
     } else if (pid == 0) { // if process is child process
       if (*command_ptr) {
         if ( strstr(command_ptr, " | ") ) {
@@ -163,8 +162,6 @@ int check_command_type(char *command_ptr, char** array_of_arguments) {
 	       else execvp_commands(command_ptr, array_of_arguments); // execute command
       }
       exit(errno); // exit
-    } else if (pid < 0) { // if subprocess failed
-      printf("Subprocess error: %s\n", strerror(errno));
     }
   }
   return 0;
@@ -345,14 +342,4 @@ void revertFD( int fd ) {
 
   stdOut = stdErr = stdIn = 0;
   close(fd);
-}
-
-// Prints the exit status of the child process
-void print_exit_status(int status) {
-  if (WIFEXITED(status)) {
-    printf("Exit status: %d\n", WEXITSTATUS(status));
-    if (WEXITSTATUS(status)) {
-      printf("Error: %s\n", strerror(WEXITSTATUS(status)));
-    }
-  }
 }

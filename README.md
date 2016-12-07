@@ -146,9 +146,3 @@ Main File: Function Headers
 	Returns: None
 
 	Runs the command.
-
-####void print_exit_status(int status)
-	Input: status
-	Returns: None
-
-	Prints the exit status of the child process
