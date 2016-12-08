@@ -93,12 +93,6 @@ Implements pipe functionality for the shell
 
 	Parses the command for any pipes and pipes commands together
 
-####int get_num_pipes(char* command)
-	Input: Command
-	Returns: number of pipes
-
-	Returns the number of pipes in the command
-
 Main File: Function Headers
 
 ####int trim(char* str)

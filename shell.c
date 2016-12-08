@@ -81,7 +81,6 @@ int trim(char * str) {
   // Remove whitespace in original string
   for (; start <= end; start++) {
     *str = *start;
-    // printf("%c", *str);
     str++;
   }
 
@@ -96,7 +95,6 @@ int parse(char* command_ptr, char** args) {
   int i = 0;
   while (command_ptr) {
     args[i] = strsep(&command_ptr, ";");
-    //printf("Parse results: %s\n", args[i]);
     i++;
   }
   return i;
@@ -117,7 +115,6 @@ int get_num_commands(char *command_ptr, char ** array_of_commands) {
   if (strchr(command_ptr, ';')) { // Parse by semicolon
     return parse(command_ptr, array_of_commands);
   } else {
-    //printf("Found single command.\n");
     array_of_commands[0] = command_ptr;
     return 1;
   }
@@ -156,10 +153,10 @@ int check_command_type(char *command_ptr, char** array_of_arguments) {
       wait(&status);
     } else if (pid == 0) { // if process is child process
       if (*command_ptr) {
-        if ( strstr(command_ptr, " | ") ) {
+        if ( strstr(command_ptr, "|") ) {
           parse_pipes(command_ptr, array_of_arguments);
         }
-	       else execvp_commands(command_ptr, array_of_arguments); // execute command
+	else execvp_commands(command_ptr, array_of_arguments); // execute command
       }
       exit(errno); // exit
     }
@@ -174,7 +171,6 @@ void execvp_commands(char* command_ptr, char** args) {
 
   while (command_ptr) {
     args[i] = strsep(&command_ptr, " ");
-    //printf("Command: %s\n", command_ptr);//debug
     if( chkrdrect(args[i]) ) {
       break;
     }
@@ -216,9 +212,8 @@ char chkrdrect( char * arg ) {
 void strCmd( char * ptr, char* args[]) {
   int i = 0;
   while (ptr) {
-      args[i] = strsep(&ptr, " ");
-      //printf("%s\n", args[i] );
-      i++;
+    args[i] = strsep(&ptr, " ");
+    i++;
   }
 
   args[i] = NULL;
@@ -227,68 +222,46 @@ void strCmd( char * ptr, char* args[]) {
 //Allows for read, write, create, and append commands to be run.
 int parse_pipes(char * command_ptr, char* args[]) {
   int pid, i = 0;
+  char* args_pipe[10];
   while (command_ptr) {
-      args[i] = strsep(&command_ptr, " ");
-      //printf("%s\n", args[i] );
-      if( !strcmp(args[i], "|") ) {
-        //printf("%s\n", command_ptr );
-        break;
-      }
-      i++;
+    args_pipe[i] = strsep(&command_ptr, "|");
+    trim(args_pipe[i]);
+    i++;
   }
 
-  args[i] = NULL;
+  args_pipe[i] = NULL;
 
-  for(i = 2; i > 0; i--) {
+  for(i = 0; i < 2; i++) {
     pid = fork();
-      if (pid > 0) {
-        wait(0);
+    if (pid > 0) {
+      wait(0);
+    }
+    else {
+      if( i == 0 ) {
+	int fd = open( ".file", O_CREAT|O_WRONLY );
+	stdOut = dup(1);
+	dup2(fd, 1);
+
+	execvp_commands( args_pipe[i], args );
+	dup2(stdOut, 1);
+	stdOut = 0;
       }
+
       else {
-        if( i == 2 ) {
-          int fd = open( ".file", O_CREAT|O_WRONLY );
-          stdOut = dup(1);
-          dup2(fd, 1);
+	int fd = open( ".file", O_CREAT|O_RDONLY );
+	stdIn = dup(0);
+	dup2(fd, 0);
 
-          execvp( args[0], args );
-          dup2(stdOut, 1);
-          stdOut = 0;
-        }
-
-        else {
-          int fd = open( ".file", O_CREAT|O_RDONLY );
-          stdIn = dup(0);
-          dup2(fd, 0);
-
-          char* args2[10];
-          strCmd( command_ptr, args2 );
-
-          execvp( args2[0], args2 );
-
-          dup2(stdIn, 0);
-          stdIn = 0;
+	execvp_commands( args_pipe[i], args );
+	dup2(stdIn, 0);
+	stdIn = 0;
       }
-        exit(0);
+      exit(0);
     }
   }
 
   execlp("rm", "rm", "-f", ".file", NULL);
   return 0;
-}
-
-int get_num_pipes(char* command) {
-  char* tmp = command;
-
-  int i = 0;
-  while (tmp) {
-    tmp = strstr(tmp, " | ");
-    if (tmp) {
-      tmp += 3;
-      i++;
-    }
-  }
-
-  return i;
 }
 
 int dupFD( char* p ) {
